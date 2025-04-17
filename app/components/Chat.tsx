@@ -13,6 +13,7 @@ interface Message {
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [username, setUsername] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -43,10 +44,10 @@ export default function Chat() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && socket) {
+    if (message.trim() && socket && username.trim()) {
       const newMessage: Message = {
         text: message,
-        sender: "You",
+        sender: username,
         timestamp: new Date(),
       };
       console.log("Sending message:", newMessage);
@@ -62,7 +63,7 @@ export default function Chat() {
           <div
             key={index}
             className={`${styles.message} ${
-              msg.sender === "You" ? styles.userMessage : styles.otherMessage
+              msg.sender === username ? styles.userMessage : styles.otherMessage
             }`}
           >
             <div className={styles.sender}>{msg.sender}</div>
@@ -77,14 +78,23 @@ export default function Chat() {
       <form onSubmit={sendMessage} className={styles.messageForm}>
         <input
           type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className={styles.messageInput}
-          placeholder="Type a message..."
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className={styles.usernameInput}
+          placeholder="Enter your name..."
         />
-        <button type="submit" className={styles.sendButton}>
-          Send
-        </button>
+        <div className={styles.inputGroup}>
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className={styles.messageInput}
+            placeholder="Type a message..."
+          />
+          <button type="submit" className={styles.sendButton}>
+            Send
+          </button>
+        </div>
       </form>
     </div>
   );
