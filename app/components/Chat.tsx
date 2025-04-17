@@ -8,6 +8,12 @@ interface Message {
   text: string;
   sender: string;
   timestamp: Date;
+  userId: string;
+}
+
+interface TypingUser {
+  userId: string;
+  username: string;
 }
 
 export default function Chat() {
@@ -15,7 +21,9 @@ export default function Chat() {
   const [message, setMessage] = useState("");
   const [username, setUsername] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const socketUrl =
@@ -31,6 +39,23 @@ export default function Chat() {
       setMessages((prev) => [...prev, message]);
     });
 
+    newSocket.on("userTyping", (data) => {
+      console.log("Received userTyping event:", data);
+      setTypingUsers((prev) => {
+        if (!prev.some((user) => user.userId === data.userId)) {
+          return [...prev, {userId: data.userId, username: data.username}];
+        }
+        return prev;
+      });
+    });
+
+    newSocket.on("userStoppedTyping", (data) => {
+      console.log("Received userStoppedTyping event:", data);
+      setTypingUsers((prev) =>
+        prev.filter((user) => user.userId !== data.userId)
+      );
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -42,16 +67,41 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
   }, [messages]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+
+    if (socket) {
+      const socketId = socket.id || "unknown";
+      const currentUsername = username.trim() || `User-${socketId.slice(0, 4)}`;
+      // タイピング開始を通知
+      socket.emit("typingStart", {username: currentUsername});
+
+      // 既存のタイマーをクリア
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // 3秒後にタイピング終了を通知
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("typingStop", {username: currentUsername});
+      }, 3000);
+    }
+  };
+
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && socket && username.trim()) {
+    if (message.trim() && socket) {
+      const socketId = socket.id || "unknown";
+      const currentUsername = username.trim() || `User-${socketId.slice(0, 4)}`;
       const newMessage: Message = {
         text: message,
-        sender: username,
+        sender: currentUsername,
         timestamp: new Date(),
+        userId: socketId,
       };
       console.log("Sending message:", newMessage);
       socket.emit("message", newMessage);
+      socket.emit("typingStop", {username: currentUsername});
       setMessage("");
     }
   };
@@ -63,7 +113,9 @@ export default function Chat() {
           <div
             key={index}
             className={`${styles.message} ${
-              msg.sender === username ? styles.userMessage : styles.otherMessage
+              msg.userId === socket?.id
+                ? styles.userMessage
+                : styles.otherMessage
             }`}
           >
             <div className={styles.sender}>{msg.sender}</div>
@@ -73,6 +125,13 @@ export default function Chat() {
             </div>
           </div>
         ))}
+        {typingUsers.length > 0 && (
+          <div className={styles.typingIndicator}>
+            {typingUsers.map((user) => (
+              <span key={user.userId}>{user.username} is typing...</span>
+            ))}
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={sendMessage} className={styles.messageForm}>
@@ -101,7 +160,7 @@ export default function Chat() {
           <input
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleInputChange}
             className={styles.messageInput}
             placeholder="Type a message..."
           />
@@ -109,6 +168,9 @@ export default function Chat() {
             Send
           </button>
         </div>
+        <p className={styles.note}>
+          注意：ページをリロードすると会話履歴が削除されます
+        </p>
       </form>
     </div>
   );
