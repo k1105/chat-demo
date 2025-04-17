@@ -3,6 +3,7 @@
 import {useState, useEffect, useRef} from "react";
 import {io, Socket} from "socket.io-client";
 import styles from "./Chat.module.scss";
+import ChatSettings from "./ChatSettings";
 
 interface Message {
   text: string;
@@ -106,8 +107,29 @@ export default function Chat() {
     }
   };
 
+  const handleThemeChange = (theme: string) => {
+    console.log("Theme changed to:", theme);
+    // テーマ変更の実装
+  };
+
+  const handleLanguageChange = (language: string) => {
+    console.log("Language changed to:", language);
+    // 言語変更の実装
+  };
+
+  const handleNotificationChange = (enabled: boolean) => {
+    console.log("Notifications:", enabled ? "enabled" : "disabled");
+    // 通知設定の実装
+  };
+
+  const handleOptionChange = (option: string) => {
+    console.log("Selected option:", option);
+    // 選択されたオプションに応じた処理を実装
+  };
+
   return (
     <div className={styles.chatContainer}>
+      <ChatSettings onOptionChange={handleOptionChange} />
       <div className={styles.messagesContainer}>
         {messages.map((msg, index) => (
           <div
@@ -125,6 +147,9 @@ export default function Chat() {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
+      </div>
+      <form onSubmit={sendMessage} className={styles.messageForm}>
         {typingUsers.length > 0 && (
           <div className={styles.typingIndicator}>
             {typingUsers.map((user) => (
@@ -132,9 +157,6 @@ export default function Chat() {
             ))}
           </div>
         )}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={sendMessage} className={styles.messageForm}>
         <div className={styles.inputGroup}>
           <label
             htmlFor="username"
