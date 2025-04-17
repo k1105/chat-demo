@@ -27,15 +27,15 @@ export default function Chat() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [selectedOption, setSelectedOption] = useState("");
+  const [bugFreezeConfig, setBugFreezeConfig] = useState({
+    blockedHiragana: ["あ", "い", "う", "え", "お"],
+    freezeProbability: 0.3,
+    bugHiragana: ["か", "き", "く", "け", "こ"],
+    bugProbability: 0.7,
+  });
   const isImeActive = useImeStatus();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // バグ・フリーズモードでブロックするひらがなと確率
-  const bugFreezeConfig = {
-    blockedHiragana: ["あ", "い", "う", "え", "お"],
-    freezeProbability: 0.5, // 70%の確率でフリーズ
-  };
 
   useEffect(() => {
     const socketUrl =
@@ -93,11 +93,25 @@ export default function Chat() {
     if (selectedOption === "option1") {
       const lastChar = convertedText[convertedText.length - 1];
       console.log("lastChar", lastChar);
+
+      // フリーズ判定
       if (lastChar && bugFreezeConfig.blockedHiragana.includes(lastChar)) {
         if (Math.random() < bugFreezeConfig.freezeProbability) {
           // フリーズ発生：入力を受け付けない
           console.log("フリーズ発生！", lastChar);
           convertedText = convertedText.slice(0, -1);
+        }
+      }
+
+      // バグ（繰り返し）判定
+      if (lastChar && bugFreezeConfig.bugHiragana.includes(lastChar)) {
+        console.log("バグ判定");
+        if (Math.random() < bugFreezeConfig.bugProbability) {
+          // バグ発生：2~3回ランダムに繰り返す
+          const repeatCount = Math.floor(Math.random() * 2) + 2; // 2 or 3
+          console.log("バグ発生！", lastChar, "を", repeatCount, "回繰り返し");
+          convertedText =
+            convertedText.slice(0, -1) + lastChar.repeat(repeatCount);
         }
       }
     }
@@ -160,12 +174,24 @@ export default function Chat() {
     setSelectedOption(option);
   };
 
+  const handleDebugChange = (settings: {
+    blockedHiragana: string[];
+    freezeProbability: number;
+    bugHiragana: string[];
+    bugProbability: number;
+  }) => {
+    setBugFreezeConfig(settings);
+  };
+
   return (
     <div className={styles.chatContainer}>
       {isImeActive && (
         <div className={styles.imeWarning}>IMEを無効にしてください</div>
       )}
-      <ChatSettings onOptionChange={handleOptionChange} />
+      <ChatSettings
+        onOptionChange={handleOptionChange}
+        onDebugChange={handleDebugChange}
+      />
       <div className={styles.messagesContainer}>
         {messages.map((msg, index) => (
           <div
@@ -195,7 +221,8 @@ export default function Chat() {
         )}
         {selectedOption === "option1" && (
           <div className={styles.bugFreezeInfo}>
-            freeze: {bugFreezeConfig.blockedHiragana.join("、")}
+            freeze: {bugFreezeConfig.blockedHiragana.join("、")} bug:{" "}
+            {bugFreezeConfig.bugHiragana.join("、")}
           </div>
         )}
         <div className={styles.inputGroup}>

@@ -3,6 +3,7 @@
   top: 1rem;
   right: 1rem;
   z-index: 100;
+  margin-bottom: 1rem;
 }
 
 .settingsButton {
@@ -54,19 +55,68 @@
   }
 }
 
+.mainSettings {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 .select {
   padding: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   background-color: white;
   color: #1f2937;
-  font-size: 0.875rem;
-  min-width: 150px;
+}
 
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+.debugToggle {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #2563eb;
+  }
+}
+
+.debugger {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f3f4f6;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    color: #1f2937;
+  }
+}
+
+.debugSection {
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+
+    input {
+      margin-left: 0.5rem;
+      padding: 0.25rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.25rem;
+
+      &[type="text"] {
+        width: 200px;
+      }
+
+      &[type="number"] {
+        width: 80px;
+      }
+    }
   }
 }
 
