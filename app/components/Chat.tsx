@@ -4,6 +4,7 @@ import {useState, useEffect, useRef} from "react";
 import {io, Socket} from "socket.io-client";
 import styles from "./Chat.module.scss";
 import ChatSettings from "./ChatSettings";
+import {convertRomajiToHiragana} from "../utils/romajiToHiragana";
 
 interface Message {
   text: string;
@@ -20,6 +21,7 @@ interface TypingUser {
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [rawInput, setRawInput] = useState("");
   const [username, setUsername] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
@@ -69,7 +71,14 @@ export default function Chat() {
   }, [messages]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
+    const inputText = e.target.value;
+    // アルファベット、ひらがな、記号（-、。、、）を許可
+    const filteredText = inputText.replace(/[^a-zA-Z\u3040-\u309F\-\.\,]/g, "");
+    setRawInput(filteredText);
+
+    // ローマ字をひらがなに変換
+    const convertedText = convertRomajiToHiragana(filteredText.toLowerCase());
+    setMessage(convertedText);
 
     if (socket) {
       const socketId = socket.id || "unknown";
@@ -104,6 +113,7 @@ export default function Chat() {
       socket.emit("message", newMessage);
       socket.emit("typingStop", {username: currentUsername});
       setMessage("");
+      setRawInput("");
     }
   };
 
