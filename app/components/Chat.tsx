@@ -2,6 +2,7 @@
 
 import {useState, useEffect, useRef} from "react";
 import {io, Socket} from "socket.io-client";
+import styles from "./Chat.module.scss";
 
 interface Message {
   text: string;
@@ -55,38 +56,33 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4">
-      <div className="flex-1 overflow-y-auto mb-4">
+    <div className={styles.chatContainer}>
+      <div className={styles.messagesContainer}>
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`mb-2 p-2 rounded ${
-              msg.sender === "You"
-                ? "bg-blue-500 text-white ml-auto"
-                : "bg-gray-200"
+            className={`${styles.message} ${
+              msg.sender === "You" ? styles.userMessage : styles.otherMessage
             }`}
           >
-            <div className="font-bold">{msg.sender}</div>
+            <div className={styles.sender}>{msg.sender}</div>
             <div>{msg.text}</div>
-            <div className="text-xs opacity-70">
+            <div className={styles.timestamp}>
               {new Date(msg.timestamp).toLocaleTimeString()}
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={sendMessage} className="flex gap-2">
+      <form onSubmit={sendMessage} className={styles.messageForm}>
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className={styles.messageInput}
           placeholder="Type a message..."
         />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
+        <button type="submit" className={styles.sendButton}>
           Send
         </button>
       </form>
