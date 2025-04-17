@@ -16,6 +16,12 @@ export default function ChatSettings({onOptionChange}: ChatSettingsProps) {
     onOptionChange(value);
   };
 
+  const options = [
+    {id: "option1", label: "バグ・フリーズ"},
+    {id: "option2", label: "選択肢２"},
+    {id: "option3", label: "選択肢３"},
+  ];
+
   return (
     <div className={styles.settingsContainer}>
       <select
@@ -24,9 +30,11 @@ export default function ChatSettings({onOptionChange}: ChatSettingsProps) {
         className={styles.select}
       >
         <option value="">選択してください</option>
-        <option value="option1">選択肢１</option>
-        <option value="option2">選択肢２</option>
-        <option value="option3">選択肢３</option>
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
       </select>
     </div>
   );

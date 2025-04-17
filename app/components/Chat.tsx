@@ -5,6 +5,7 @@ import {io, Socket} from "socket.io-client";
 import styles from "./Chat.module.scss";
 import ChatSettings from "./ChatSettings";
 import {convertRomajiToHiragana} from "../utils/romajiToHiragana";
+import {useImeStatus} from "../hooks/useImeStatus";
 
 interface Message {
   text: string;
@@ -25,8 +26,16 @@ export default function Chat() {
   const [username, setUsername] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [selectedOption, setSelectedOption] = useState("");
+  const isImeActive = useImeStatus();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // バグ・フリーズモードでブロックするひらがなと確率
+  const bugFreezeConfig = {
+    blockedHiragana: ["あ", "い", "う", "え", "お"],
+    freezeProbability: 0.5, // 70%の確率でフリーズ
+  };
 
   useEffect(() => {
     const socketUrl =
@@ -74,10 +83,25 @@ export default function Chat() {
     const inputText = e.target.value;
     // アルファベット、ひらがな、記号（-、。、、）を許可
     const filteredText = inputText.replace(/[^a-zA-Z\u3040-\u309F\-\.\,]/g, "");
+
     setRawInput(filteredText);
 
     // ローマ字をひらがなに変換
-    const convertedText = convertRomajiToHiragana(filteredText.toLowerCase());
+    let convertedText = convertRomajiToHiragana(filteredText.toLowerCase());
+
+    // バグ・フリーズモードの場合
+    if (selectedOption === "option1") {
+      const lastChar = convertedText[convertedText.length - 1];
+      console.log("lastChar", lastChar);
+      if (lastChar && bugFreezeConfig.blockedHiragana.includes(lastChar)) {
+        if (Math.random() < bugFreezeConfig.freezeProbability) {
+          // フリーズ発生：入力を受け付けない
+          console.log("フリーズ発生！", lastChar);
+          convertedText = convertedText.slice(0, -1);
+        }
+      }
+    }
+
     setMessage(convertedText);
 
     if (socket) {
@@ -133,12 +157,14 @@ export default function Chat() {
   };
 
   const handleOptionChange = (option: string) => {
-    console.log("Selected option:", option);
-    // 選択されたオプションに応じた処理を実装
+    setSelectedOption(option);
   };
 
   return (
     <div className={styles.chatContainer}>
+      {isImeActive && (
+        <div className={styles.imeWarning}>IMEを無効にしてください</div>
+      )}
       <ChatSettings onOptionChange={handleOptionChange} />
       <div className={styles.messagesContainer}>
         {messages.map((msg, index) => (
@@ -165,6 +191,11 @@ export default function Chat() {
             {typingUsers.map((user) => (
               <span key={user.userId}>{user.username} is typing...</span>
             ))}
+          </div>
+        )}
+        {selectedOption === "option1" && (
+          <div className={styles.bugFreezeInfo}>
+            freeze: {bugFreezeConfig.blockedHiragana.join("、")}
           </div>
         )}
         <div className={styles.inputGroup}>
