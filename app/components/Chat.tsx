@@ -76,14 +76,28 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={sendMessage} className={styles.messageForm}>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className={styles.usernameInput}
-          placeholder="Enter your name..."
-        />
         <div className={styles.inputGroup}>
+          <label
+            htmlFor="username"
+            style={{width: "3rem", lineHeight: "2rem", marginRight: "3rem"}}
+          >
+            Username
+          </label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={styles.usernameInput}
+            placeholder="Enter your name..."
+          />
+        </div>
+        <div className={styles.inputGroup}>
+          <label
+            htmlFor="message"
+            style={{width: "3rem", lineHeight: "2rem", marginRight: "3rem"}}
+          >
+            Message
+          </label>
           <input
             type="text"
             value={message}
